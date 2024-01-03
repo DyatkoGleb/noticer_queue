@@ -3,4 +3,5 @@ uvicorn
 watchdog
 redis
 requests
+apscheduler
 python-dotenv
