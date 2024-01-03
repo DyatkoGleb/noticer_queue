@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+watchdog
+redis
+requests
+python-dotenv

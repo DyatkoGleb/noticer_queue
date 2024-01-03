@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  py:
+    container_name: nq_py
+    restart: always
+    build:
+      context: ./docker/py
+    ports:
+      - "8009:8001"
+    volumes:
+      - ./app:/app
+    depends_on:
+      - redis
+    networks:
+      - noticer
+
+  redis:
+    container_name: nq_redis
+    restart: always
+    build:
+      context: ./docker/redis
+    networks:
+      - noticer
+
+networks:
+  noticer:
+    external: true
