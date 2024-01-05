@@ -3,33 +3,35 @@ from redis import StrictRedis
 from dotenv import load_dotenv
 import requests
 import time
+import json
 import os
 
 load_dotenv()
 
 
 class MessageScheduler:
-    db_name = os.getenv('DB_NAME')
+    db_queue_name = os.getenv('DB_QUEUE_NAME')
     redis = StrictRedis(host='nq_redis', port=6379, db=0)
 
     def process_tasks(self) -> None:
-        task_list = self.redis.zrange(self.db_name, 0, -1, withscores=True)
+        task_list = self.redis.zrange(self.db_queue_name, 0, -1, withscores=True)
+
         for member, score in task_list:
             task_time = score
 
             if time.time() >= task_time:
-                url = os.getenv('NOTICER_BOT_URL') + '/send-message'
+                url = os.getenv('NOTICER_BOT_URL') + '/sendMessage'
 
-                json_data = { 'chatId': os.getenv('CHAT_ID'), 'message': member.decode('utf-8') }
+                json_data = { 'chatId': os.getenv('CHAT_ID'), 'data': member.decode('utf-8') }
 
                 response = requests.post(url, json=json_data)
                 if response.status_code == 200:
-                    self.redis.zrem(self.db_name, member)
+                    self.redis.zrem(self.db_queue_name, member)
                 else:
                     print(f"Ошибка при выполнении запроса. Код ответа: { response.status_code }")
 
     def add_tasks_to_queue(self, notice_text: str, notice_timestamp: float) -> None:
-        self.redis.zadd(self.db_name, { notice_text: notice_timestamp })
+        self.redis.zadd(self.db_queue_name, {notice_text: notice_timestamp})
 
     def getNotices(self) -> dict:
         response = requests.get(os.getenv('NOTICER_API_URL') + '/getAllNotices')
@@ -40,7 +42,7 @@ class MessageScheduler:
             if notices:
                 return notices['data']
         else:
-            raise Exception("Ошибка при выполнении запроса. Код ответа: {response.status_code}")
+            raise Exception("Ошибка при выполнении запроса. Код ответа: " + str(response.status_code))
 
     def create_schedule(self) -> None:
         for notice in self.getNotices():
@@ -49,4 +51,4 @@ class MessageScheduler:
             original_datetime = datetime.strptime(notice_datetime, '%d.%m.%Y %H:%M')
             notice_timestamp = datetime.timestamp(original_datetime - timedelta(hours=3))
 
-            self.add_tasks_to_queue(notice_text, notice_timestamp)
+            self.add_tasks_to_queue(json.dumps({"text": notice_text, "datetime": notice_datetime}), notice_timestamp)

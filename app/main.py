@@ -13,8 +13,8 @@ app.include_router(router)
 
 
 try:
-    scheduler.add_job(MessageScheduler().create_schedule, trigger=CronTrigger(hour=15, minute=41, second=00))
-    scheduler.add_job(MessageScheduler().process_tasks, trigger=CronTrigger(second="0/10"))
+    scheduler.add_job(MessageScheduler().create_schedule, trigger=CronTrigger(hour=00, minute=00, second=00))
+    scheduler.add_job(MessageScheduler().process_tasks, trigger=CronTrigger(minute='*'))
     scheduler.start()
 except Exception as e:
     print(f"Произошла ошибка: {e}")
