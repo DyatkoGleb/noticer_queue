@@ -16,6 +16,8 @@ class MessageScheduler:
     def process_tasks(self) -> None:
         task_list = self.redis.zrange(self.db_queue_name, 0, -1, withscores=True)
 
+        print(task_list)
+
         for member, score in task_list:
             task_time = score
 
@@ -47,8 +49,8 @@ class MessageScheduler:
     def create_schedule(self) -> None:
         for notice in self.getNotices():
             notice_text = notice['text']
-            notice_datetime = notice['datetime']
-            original_datetime = datetime.strptime(notice_datetime, '%d.%m.%Y %H:%M')
+            notice_datetime_str = notice['true_datetime']
+            original_datetime = datetime.strptime(notice_datetime_str, '%Y-%m-%dT%H:%M:%S')
             notice_timestamp = datetime.timestamp(original_datetime - timedelta(hours=3))
 
-            self.add_tasks_to_queue(json.dumps({"text": notice_text, "datetime": notice_datetime}), notice_timestamp)
+            self.add_tasks_to_queue(json.dumps({'text': notice_text, 'true_datetime': notice_datetime_str}), notice_timestamp)
