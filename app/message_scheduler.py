@@ -36,7 +36,7 @@ class MessageScheduler:
         self.redis.zadd(self.db_queue_name, {notice_text: notice_timestamp})
 
     def getNotices(self) -> dict:
-        response = requests.get(os.getenv('NOTICER_API_URL') + '/getAllNotices')
+        response = requests.get(os.getenv('NOTICER_API_URL') + '/getNotesForNextDay')
 
         if response.status_code == 200:
             notices = response.json()
